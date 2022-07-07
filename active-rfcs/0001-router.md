@@ -29,7 +29,7 @@ const router = new Router()
 
 包括以下几个部分进行设计：
 * 路由器的构造参数
-* 路由器应当支持的 HTTP Method 类型：GET、POST、PUT、DELETE、PATCH
+* 路由器应当支持的 HTTP Method 类型，如：GET、POST、PUT、DELETE、PATCH
 * 路由器对入参的校验
   * `request body`：支持 json、form、raw text、file
   * `query`：格式为 `?[name[(type=string)]]`
