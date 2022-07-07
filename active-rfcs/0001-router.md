@@ -63,5 +63,6 @@ interface Router<P extends string, Docs> {
 
 # TODO
 
+* 对自定义参数类型的支持
 * 对请求的 body 等数据进行处理
 * 对 WS 的支持
