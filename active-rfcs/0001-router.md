@@ -11,13 +11,30 @@ implementation: # 留空
 
 # 介绍与示例
 
-基于请求中间件的思想，作为一个路由中间件进行设计。
-拥有对各种类型入参数信息进行校验以及对数据出口进行过滤的功能。
+基于请求中间件作为一个路由中间件进行设计。
+大致的功能为提供对路由定义过程中的类型进行导出、对应用传入的数据进行校验处理、对中间件返回的数据进行过滤。
 
 ```ts
 const router = new Router()
   .get('/users/:uid', ctx => ctx.query.uid)
   .post(Schema.User, Schema.Number, '/users', ctx => ctx.body.uid)
+```
+
+后台应用（例如 Koa、Express 等）的请求中间件的定义应当如下：
+```ts
+interface Context {
+  request: {
+    body?: Record<string, any>
+    query?: Record<string, string | string[]>
+  }
+  response: {
+    body?: any
+    statusCode?: number
+  }
+}
+interface Middleware {
+  (ctx: Context, next: () => void | Promise<void>): any | Promise<any>
+}
 ```
 
 # 动机
@@ -32,8 +49,8 @@ const router = new Router()
 * 路由器应当支持的 HTTP Method 类型，如：GET、POST、PUT、DELETE、PATCH
 * 路由器对入参的校验
   * `request body`：支持 json、form、raw text、file
-  * `query`：格式为 `?[name[(type=string)]]`
-  * `path params`：格式为 `:name[(type)]`
+  * `query`：格式为 `?[name[(type=string|number|boolean|...)][&name[(type=string|number|boolean|...)]]]`
+  * `path params`：格式为 `:name[(type=string|number|boolean|...)]`
 * 路由器对出参的过滤，将路径响应函数的返回值根据 `schema` 进行过滤
 * 对应用传入的 `Context` 的修改，如 `request.query`、`request.body` 等
 
