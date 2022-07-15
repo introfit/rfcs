@@ -1,0 +1,85 @@
+---
+id: router
+startDate: 2022-07-06
+targetVersion: 1.x
+implementation: # 留空
+---
+
+# 概述
+
+具有参数校验与响应数据控制的路由中间件，同时可导出路由定义过程中的各种 TypeScript 类型信息。
+
+# 介绍与示例
+
+基于请求中间件作为一个路由中间件进行设计。
+大致的功能为提供对路由定义过程中的类型进行导出、对应用传入的数据进行校验处理、对中间件返回的数据进行过滤。
+
+```ts
+const router = new Router()
+  .get('/users/:uid', ctx => ctx.query.uid)
+  .post(Schema.User, Schema.Number, '/users', ctx => ctx.body.uid)
+```
+
+后台应用（例如 Koa、Express 等）的请求中间件的定义应当如下：
+```ts
+interface Context {
+  request: {
+    body?: Record<string, any>
+    query?: Record<string, string | string[]>
+  }
+  response: {
+    body?: any
+    statusCode?: number
+  }
+}
+interface Middleware {
+  (ctx: Context, next: () => void | Promise<void>): any | Promise<any>
+}
+```
+
+# 动机
+
+该模块为项目的核心设计模块，当后端采用 Node.js 提供 RESTFul 服务时，通过该模块可以生成前端开发所需的路由类型信息。
+除此之外还可对 quester 模块的功能进行基础能力校验，并扩宽工具的影响范围。
+
+# 详细设计
+
+包括以下几个部分进行设计：
+* 路由器的构造参数
+* 路由器应当支持的 HTTP Method 类型，如：GET、POST、PUT、DELETE、PATCH
+* 路由器对入参的校验
+  * `request body`：支持 json、form、raw text、file
+  * `query`：格式为 `?[name[(type=string|number|boolean|...)][&name[(type=string|number|boolean|...)]]]`
+  * `path params`：格式为 `:name[(type=string|number|boolean|...)]`
+* 路由器对出参的过滤，将路径响应函数的返回值根据 `schema` 进行过滤
+* 对应用传入的 `Context` 的修改，如 `request.query`、`request.body` 等
+
+```ts
+interface RouterOptions<P extends string> {
+  prefix?: P
+}
+type Method = 'get' | 'post' | 'put' | 'delete' | 'patch'
+// 下面为伪代码
+interface Router<P extends string, Docs> {
+  docs: Docs
+  new(opts?: RouterOptions<P>): Router<P, {}>
+  [p in Method]: <Inn, Out, P>(
+    inn: Inn, out: Out,
+    path: P, middleware: Middleware<Inn, Out>
+  ) => Router<P, Resolve<P, Out, Inn>>
+}
+```
+
+# 缺点
+
+设计中尽量容易让用户从原本的 Router 中切换过来，所以在设计过程中会携带一部分的负担。
+
+# 备选项
+
+无。
+
+# TODO
+
+* 对自定义参数类型的支持
+* 对请求的 body 等数据进行处理
+* 对 WS 的支持
